@@ -1,0 +1,79 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fake News Detector</title>
+    <!-- Correct CSS path -->
+    <link rel="stylesheet" href="{% static 'detector/css/style.css' %}">
+
+    <!-- JS URLs for Django views -->
+    <script>
+        const CHECK_NEWS_URL = "{% url 'check_news' %}";
+        const SUBMIT_REVIEW_URL = "{% url 'submit_review' %}";
+    </script>
+
+    <!-- Main JS file -->
+    <script src="{% static 'detector/js/main.js' %}"></script>
+</head>
+<body>
+    <header class="app-header">
+        <h1 class="title">Fake News Detector</h1>
+        <p class="subtitle">Paste the snippet and click 'Check News' to see if the news is Real or Fake</p>
+    </header>
+
+    <main class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- About This App -->
+            <div class="card">
+                <h2 class="card-title">About This App</h2>
+                <p class="card-text">
+                    This application fetches real-time news from multiple sources and helps users check if it is real or fake.
+                </p>
+            </div>
+
+            <!-- Random Fact -->
+            <div class="card">
+                <h2 class="card-title">Did You Know?</h2>
+                <p class="card-text" id="fact">{{ fact }}</p>
+            </div>
+
+            <!-- Review Form -->
+            <div class="card">
+                <h2 class="card-title">Leave a Review</h2>
+                <div id="reviewMessage" class="info" style="display:none;"></div>
+                <form id="reviewForm">
+                    {% csrf_token %}
+                    <input type="text" name="name" placeholder="Your Name">
+                    <textarea name="review" placeholder="Write your review here..." rows="3"></textarea>
+                    <button type="submit" name="review_submit">Submit Review</button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <section class="main-content">
+            <!-- News Input Form -->
+            <div class="card">
+                <h2 class="card-title">Check News</h2>
+                <div id="newsMessage" class="info" style="display:none;"></div>
+                <form id="newsForm">
+                    {% csrf_token %}
+                    <textarea name="news_text" rows="5" placeholder="Enter news snippet..."></textarea>
+                    <button type="submit" name="check_news_btn">Check News</button>
+                </form>
+            </div>
+
+            <!-- Display Result -->
+            <div class="card result-card" id="resultCard" style="display:none;">
+                <div class="result-box" id="resultBox"></div>
+                <p class="info" id="reason"></p>
+                <p class="info" id="confidence"></p>
+                <p class="info" id="source"></p>
+                <p class="info" id="url"></p>
+            </div>
+        </section>
+    </main>
+</body>
+</html>
