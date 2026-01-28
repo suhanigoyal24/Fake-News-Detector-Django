@@ -9,14 +9,20 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = 'django-insecure-pgfk*yr9^uhlc4b@xfff&+-t!jdzoh6=^gxfwglabatp+1cix5'
-DEBUG = True
+
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-pgfk*yr9^uhlc4b@xfff&+-t!jdzoh6=^gxfwglabatp+1cix5"
+)
+
+DEBUG = os.environ.get("DEBUG", "False") == "True"
+
 ALLOWED_HOSTS = [
-    'fake-news-detector-django-production.up.railway.app',
     'localhost',
     '127.0.0.1',
+    '.onrender.com',
 ]
+
 
 
 # Application definition
