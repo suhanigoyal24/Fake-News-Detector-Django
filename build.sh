@@ -1,14 +1,13 @@
 #!/bin/bash
-
-# Exit immediately if a command exits with a non-zero status
 set -e
 
-# Collect static files
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
 echo "Collecting static files..."
-python3 manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
 
-# Apply database migrations
-echo "Running migrations..."
-python3 manage.py migrate
+echo "Applying database migrations..."
+python manage.py migrate
 
-echo "Build script completed successfully."
+echo "Build completed successfully."
