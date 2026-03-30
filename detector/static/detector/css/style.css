@@ -1,116 +1,111 @@
-.app-header {
-    text-align: center;             /* center the text */
-    background-color: #00bfff;      /* bright blue background */
-    color: white;                   /* white text */
-    padding: 40px 20px;             /* vertical and horizontal padding */
-    border-radius: 0 0 15px 15px;   /* rounded bottom corners */
-    margin-bottom: 30px;            /* space below header */
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* subtle shadow */
-}
-
-.app-header h1 {
-    margin: 0 0 10px 0;
-    font-size: 2.5em;               /* bigger title */
-    font-weight: bold;
-}
-
-.app-header p {
+body {
     margin: 0;
-    font-size: 1.2em;
+    font-family: Arial;
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
-/* Ensure container stays within page width */
-.container {
+/* HEADER */
+.header {
+    background: white;
+    padding: 15px 30px;
+    border-bottom: 1px solid #ddd;
+}
+
+.logo {
+    color: #2563eb;
+}
+
+/* LAYOUT */
+.layout {
     display: flex;
     gap: 20px;
     padding: 20px;
-    flex-wrap: wrap;
-    max-width: 1200px; /* optional: prevent stretching too wide */
-    margin: 0 auto;
 }
 
-/* Sidebar */
-.sidebar {
-    flex: 1 1 250px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 250px;
-}
+.left { width: 50%; }
+.right { width: 50%; }
 
-/* Main content */
-.main-content {
-    flex: 2 1 500px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    min-width: 500px;
-}
-
-/* Cards */
+/* CARD */
 .card {
-    background-color: white;
+    background: white;
+    padding: 20px;
     border-radius: 10px;
-    padding: 15px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    width: 100%;
-    box-sizing: border-box;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-/* Forms inside cards */
-#newsForm, #reviewForm {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+/* INPUT */
+textarea, input {
     width: 100%;
-    box-sizing: border-box;
-}
-
-/* Textareas */
-textarea {
-    width: 100%;
-    box-sizing: border-box;
-    border-radius: 5px;
-    border: 1px solid #ccc;
     padding: 10px;
-    resize: vertical;
-    max-height: 150px; /* optional: constrain height */
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
 }
 
-/* Buttons */
+/* BUTTON */
 button {
-    background-color: #00bfff;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #009acd;
-}
-
-/* Result card */
-.result-card {
-    width: 100%;
-}
-
-/* Result box */
-#resultBox {
     margin-top: 10px;
     padding: 10px;
-    border-radius: 5px;
-    font-weight: bold;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
 }
 
-/* Real/Fake colors */
+/* RESULT BADGE */
+#resultBadge {
+    font-size: 28px;
+    font-weight: bold;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
 .real {
-    background-color: #28a745;
-    color: white;
+    background: #dcfce7;
+    color: #166534;
 }
 
 .fake {
-    background-color: #dc3545;
-    color: white;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+/* CONFIDENCE */
+.bar {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 5px;
+    margin-top: 5px;
+}
+
+#confidenceFill {
+    height: 100%;
+    width: 0%;
+    border-radius: 5px;
+    background: #2563eb;
+}
+
+/* HISTORY */
+.history-item {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+
+.badge.real {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge.fake {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.history-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
 }
