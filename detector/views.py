@@ -1,53 +1,23 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from .models import Review
-from .model_training import preprocess_text, get_model
-from .constant_fakes import IMPOSSIBLE_STATEMENTS
-from urllib.parse import urlparse
-from sklearn.metrics.pairwise import cosine_similarity
-import random
 from django.http import JsonResponse
+from urllib.parse import urlparse
+from .models import Review
+from .model_training import predict_news
+import random
 
 
-# ------------------- Helper functions -------------------
-
-def get_source_name(article_url):
+def clean_source(url):
     try:
-        parsed = urlparse(article_url)
-        domain = parsed.netloc.lower()
-        for sub in ["www.", "m.", "news.", "en."]:
-            domain = domain.replace(sub, "")
-        name_part = domain.split(".")[0]
-        return " ".join(word.capitalize() for word in name_part.replace("-", " ").split())
+        return urlparse(url).netloc.replace("www.", "")
     except:
         return "Unknown Source"
 
 
-def is_impossible(text):
-    for stmt in IMPOSSIBLE_STATEMENTS:
-        if stmt.lower() in text.lower():
-            return True, stmt
-    return False, ""
-
-
-def find_closest_match(cleaned_text, df, vectorizer):
-    if df.empty:
-        return None
-
-    vectors = vectorizer.transform(df["cleaned_text"])
-    input_vec = vectorizer.transform([cleaned_text])
-    similarity = cosine_similarity(input_vec, vectors)[0]
-    idx = similarity.argmax()
-    return df.iloc[idx]
-
-
-# ------------------- Main View -------------------
-
 def home(request):
-    result = None
     news_text = ""
+    result = None
 
-    # Random fact
     facts = [
         "Over 50% of adults read news online.",
         "Fake news spreads faster than real news.",
@@ -56,81 +26,37 @@ def home(request):
     ]
     fact = random.choice(facts)
 
-    # Load ML model
-    df, vectorizer, model = get_model()
-
-    # -------------------- POST Requests --------------------
     if request.method == "POST":
 
-        # ---------- Review Submit ----------
         if "review_submit" in request.POST:
-            name = request.POST.get("name", "Anonymous")
+            name = request.POST.get("name", "Anonymous").strip()
             review_text = request.POST.get("review", "").strip()
 
             if review_text:
                 Review.objects.create(name=name or "Anonymous", review=review_text)
-                messages.success(request, "Thanks for your time! Your review was submitted successfully.")
+                messages.success(request, "Thanks! Review submitted.")
             else:
-                messages.error(request, "Please write something before submitting.")
+                messages.error(request, "Please write a review.")
 
             return redirect("home")
 
-        # ---------- Check News ----------
         if "check_news_btn" in request.POST:
-            news_text = request.POST.get("news_text", "")
+            news_text = request.POST.get("news_text", "").strip()
 
-            if news_text.strip():
-                impossible, reason = is_impossible(news_text)
+            if news_text:
+                result = predict_news(news_text)
 
-                # Impossible rule-based fake
-                if impossible:
-                    result = {
-                        "label": "fake",
-                        "reason": reason,
-                        "confidence": 100,
-                        "source": "",
-                        "url": ""
-                    }
+                if result.get("article_url"):
+                    result["source"] = clean_source(result.get("article_url"))
 
-                # Model not ready
-                elif model is None or vectorizer is None or df.empty:
-                    result = {
-                        "label": "Model not ready",
-                        "confidence": 0,
-                        "source": "Unknown",
-                        "url": ""
-                    }
-
-                # ML Prediction
-                else:
-                    cleaned = preprocess_text(news_text)
-                    input_vec = vectorizer.transform([cleaned])
-                    pred = model.predict(input_vec)[0]
-                    prob = model.predict_proba(input_vec)[0]
-                    confidence = round(max(prob) * 100, 2)
-
-                    closest = find_closest_match(cleaned, df, vectorizer)
-
-                    if closest is not None:
-                        source = closest.get("source", get_source_name(closest.get("article_url", "")))
-                        url = closest.get("article_url", "")
-                    else:
-                        source = "Unknown"
-                        url = ""
-
-                    result = {
-                        "label": pred,
-                        "confidence": confidence,
-                        "source": source,
-                        "url": url
-                    }
-
-    # We DO NOT send reviews to template anymore
     return render(request, "detector/home.html", {
         "result": result,
         "news_text": news_text,
         "fact": fact
     })
+
+
+# AJAX REVIEW
 def submit_review(request):
     if request.method == "POST":
         name = request.POST.get("name", "Anonymous").strip()
@@ -142,60 +68,42 @@ def submit_review(request):
         else:
             return JsonResponse({"success": False, "error": "Review cannot be empty"})
 
+    return JsonResponse({"success": False, "error": "Invalid request"})
+
+
+# AJAX CHECK NEWS
 def check_news(request):
     try:
         if request.method != "POST":
             return JsonResponse({"success": False, "error": "Invalid request method"})
 
         news_text = request.POST.get("news_text", "").strip()
+
         if not news_text:
-            return JsonResponse({"success": False, "error": "Empty news"})
+            return JsonResponse({"success": False, "error": "Empty news input"})
 
-        # Load model
-        df, vectorizer, model = get_model()
+        result = predict_news(news_text)
 
-        # Rule-based impossible
-        impossible, reason = is_impossible(news_text)
-        if impossible:
-            return JsonResponse({
-                "success": True,
-                "label": "fake",
-                "confidence": 100,
-                "reason": reason,
-                "source": "",
-                "url": ""
-            })
+        url = result.get("article_url", "")
+        confidence = result.get("confidence", 0)
+        label = result.get("label", "").upper()
 
-        if model is None or vectorizer is None or df is None or df.empty:
-            return JsonResponse({
-                "success": False,
-                "error": "Model not loaded"
-            })
+        # ✅ ALWAYS show source
+        source = clean_source(url) if url else result.get("source", "Unknown Source")
 
-        cleaned = preprocess_text(news_text)
-        input_vec = vectorizer.transform([cleaned])
-
-        pred = model.predict(input_vec)[0]
-        prob = model.predict_proba(input_vec)[0]
-        confidence = round(max(prob) * 100, 2)
-
-        closest = find_closest_match(cleaned, df, vectorizer)
-
-        if closest is not None:
-            source = closest.get("source", get_source_name(closest.get("article_url", "")))
-            url = closest.get("article_url", "")
-        else:
-            source = "Unknown"
+        # ❌ show URL only if REAL + high confidence
+        if label != "REAL" or confidence < 70:
             url = ""
 
         return JsonResponse({
             "success": True,
-            "label": pred,
+            "label": label,
             "confidence": confidence,
+            "reason": result.get("reason", ""),
             "source": source,
             "url": url
         })
 
     except Exception as e:
         print("CHECK_NEWS ERROR:", str(e))
-        return JsonResponse({"success": False, "error": str(e)})
+        return JsonResponse({"success": False, "error": "Something went wrong"})
