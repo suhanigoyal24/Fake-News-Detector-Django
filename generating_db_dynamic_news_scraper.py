@@ -1,4 +1,4 @@
-# dynamic_news_scraper_db_cleaned.py
+# generating_db_dynamic_news_scraper.py
 
 import requests
 from bs4 import BeautifulSoup
@@ -28,9 +28,11 @@ fake_sources = [
     "https://www.thequint.com/webqoof",
     "https://www.indiatoday.in/fact-check",
     "https://factcheck.pib.gov.in/",
-    "https://www.snopes.com/fact-check/",
-    "https://factcheck.afp.com/",
-    "https://www.reuters.com/fact-check/"
+    "https://www.vishvasnews.com/english/",
+    "https://newschecker.in/",
+    "https://www.factcrescendo.com/",
+    "https://www.politifact.com/factchecks/",
+    "https://fullfact.org/"
 ]
 
 # ---------------- DATABASE SETUP ----------------
@@ -48,18 +50,31 @@ conn.commit()
 
 # ---------------- TEXT CLEANING ----------------
 def clean_text(text):
-    text = html.unescape(text)  # convert HTML entities
-    text = re.sub(r'\s+', ' ', text)  # remove extra spaces/newlines
+    text = html.unescape(text)
+    text = re.sub(r'\s+', ' ', text)
     text = text.strip()
-    text = text.lower()  # lowercase for consistency
+    text = text.lower()
     return text
+
+# ---------------- HEADLINE QUALITY FILTER ----------------
+SKIP_PHRASES = {
+    "subscribe", "read more", "click here", "sign in", "log in",
+    "home", "about us", "contact us", "privacy policy", "terms of use",
+    "terms and conditions", "correction policy", "grievance redressal"
+}
+
+def is_valid_headline(title):
+    if len(title) < 25:
+        return False
+    if title.lower() in SKIP_PHRASES:
+        return False
+    return True
 
 # ---------------- SCRAPER ----------------
 def scrape_url(url, label, retries=3, delay=2):
     articles = []
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                      "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept-Language": "en-US,en;q=0.9",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Connection": "keep-alive"
@@ -72,7 +87,7 @@ def scrape_url(url, label, retries=3, delay=2):
             soup = BeautifulSoup(resp.content, "html.parser")
             for link in soup.find_all("a", href=True):
                 title = clean_text(link.get_text())
-                if len(title) < 8:  # skip very short titles
+                if not is_valid_headline(title):
                     continue
                 href = link["href"]
                 full_url = href if href.startswith("http") else urljoin(url, href)
@@ -116,12 +131,10 @@ def main():
     print("Scraping FAKE news sources...")
     fake_articles = scrape_all(fake_sources, "fake")
 
-    # Combine and remove duplicates by article_url
     all_articles = real_articles + fake_articles
     unique_articles = {a['article_url']: a for a in all_articles}.values()
     unique_articles = list(unique_articles)
 
-    # Insert directly into DB
     insert_articles_to_db(unique_articles)
     print("Scraping, cleaning, and DB insertion complete!")
 

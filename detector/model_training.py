@@ -50,7 +50,7 @@ def train_model():
     X = vectorizer.fit_transform(df["cleaned_text"])
     y = df["label"]
 
-    model = SVC(probability=True)
+    model = SVC(probability=True, class_weight={"fake": 3, "real": 1})
     model.fit(X, y)
 
     with open(MODEL_FILE, "wb") as f:
