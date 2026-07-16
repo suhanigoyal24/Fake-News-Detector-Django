@@ -8,6 +8,8 @@ import sqlite3
 import time
 import re
 import html
+import os
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ---------------- SOURCES ----------------
 real_sources = [
@@ -36,7 +38,7 @@ fake_sources = [
 ]
 
 # ---------------- DATABASE SETUP ----------------
-conn = sqlite3.connect("news.db")
+conn = sqlite3.connect(os.path.join(PROJECT_ROOT, "ml_artifacts", "news.db"))
 cursor = conn.cursor()
 cursor.execute("""
 CREATE TABLE IF NOT EXISTS news_table (

@@ -12,8 +12,8 @@ from .constant_fakes import IMPOSSIBLE_STATEMENTS
 
 # PATHS
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DB_FILE = os.path.join(PROJECT_ROOT, "news.db")
-MODEL_FILE = os.path.join(PROJECT_ROOT, "model_state.pkl")
+DB_FILE = os.path.join(PROJECT_ROOT, "ml_artifacts", "news.db")
+MODEL_FILE = os.path.join(PROJECT_ROOT, "ml_artifacts", "model_state.pkl")
 
 # PREPROCESS
 def preprocess_text(text):
